@@ -1,4 +1,4 @@
-// app/layout.tsx (atau src/app/layout.tsx)
+// app/layout.tsx (atau src/app/layout.tsx) 
 import type { Metadata } from "next";
 import "./globals.css";
 import Loader from "@/components/Loader";
