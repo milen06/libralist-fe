@@ -1,0 +1,502 @@
+@import "tailwindcss";
+
+/* Mode gelap pakai class */
+/* @custom-variants {
+  dark: ".dark &";
+} */
+
+/* Theme Config */
+@theme {
+  /* Font Families */
+  --font-urbanist: Urbanist-Regular, sans-serif;
+  --font-urbanist-medium: Urbanist-Medium, sans-serif;
+  --font-urbanist-semibold: Urbanist-Semibold, sans-serif;
+  --font-urbanist-bold: Urbanist-Bold, sans-serif;
+
+  /* Colors */
+  --color-darkMode: #272935;
+  --color-mainColor: #e45f65;
+  --color-lightMode: #fdfcf7;
+  --color-readMode: #f0eee2;
+  --color-textColor: #1e222d;
+
+  /* Breakpoints */
+  --breakpoint-2xs: 400px;
+  --breakpoint-xs: 500px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* Fonts */
+@font-face {
+  font-family: "Urbanist-Regular";
+  src: url("/fonts/Urbanist/Urbanist-Regular.ttf");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Urbanist-Medium";
+  src: url("/fonts/Urbanist/Urbanist-Medium.ttf");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Urbanist-Semibold";
+  src: url("/fonts/Urbanist/Urbanist-Semibold.ttf");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Urbanist-Bold";
+  src: url("/fonts/Urbanist/Urbanist-Bold.ttf");
+  font-display: swap;
+}
+
+/* Base Layer */
+@layer base {
+  * {
+    @apply text-textColor;
+  }
+
+  /* IMPORTANT: Override text color untuk dark mode */
+  .dark * {
+    @apply text-lightMode;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply font-[var(--font-urbanist-medium)] bg-lightMode;
+  }
+
+  section {
+    @apply pt-16 mb-16 relative;
+  }
+
+  input {
+    @apply border-none focus:border-none focus:ring-0 focus:outline-none;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+}
+
+/* Component Layer */
+@layer components {
+  .loader {
+    @apply bg-lightMode fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-[999];
+    transition: opacity 0.75s, visibility 0.75s;
+  }
+  .loader img {
+    @apply w-[200px];
+    animation: 2s ease-in infinite loading;
+    position: relative;
+  }
+  .loader--hidden {
+    @apply opacity-0;
+    visibility: hidden;
+  }
+
+  @keyframes loading {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .input-text {
+    @apply py-[18px] px-6 bg-[#F0F0F0] rounded-sm mb-3.5;
+  }
+
+  .btn-auth {
+    @apply mt-8 bg-mainColor py-4 mb-11 text-lightMode;
+  }
+
+  #sidebar {
+    @apply border-r fixed z-[99] bg-lightMode border-textColor/30 pt-9 px-2 h-screen w-[115px];
+  }
+
+  #sidebar .sidebar-navigation {
+    @apply flex flex-col items-center justify-center h-screen;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon {
+    @apply text-2xl mb-10 py-3.5 px-4;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon.collections,
+  #sidebar .sidebar-navigation .nav-icon.bookmarks {
+    @apply px-5;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon i {
+    @apply duration-300 text-textColor/90;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon:hover i {
+    @apply text-mainColor;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon.active {
+    @apply bg-mainColor/10 rounded-full;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon.active i {
+    @apply text-mainColor;
+  }
+
+  main {
+    @apply mx-auto md:pl-[150px];
+  }
+
+  #navbar {
+    @apply flex justify-between py-7;
+  }
+
+  #navbar .search-box {
+    @apply flex items-center;
+  }
+
+  #navbar .search-box .search-icon {
+    @apply mr-3 text-xl;
+  }
+
+  #navbar .search-box .search-icon i {
+    @apply text-textColor;
+  }
+
+  #navbar .search-box .search-input {
+    @apply sm:w-[300px] w-[250px] py-2 bg-transparent text-textColor;
+  }
+
+  #navbar .search-box .search-input::placeholder {
+    @apply text-textColor/50;
+  }
+
+  #navbar .right-bar {
+    @apply flex items-center;
+  }
+
+  #navbar .right-bar .dropdown:hover .dropdown-menu {
+    @apply block;
+  }
+
+  #navbar .right-bar .profile {
+    @apply flex items-center mr-8;
+  }
+
+  #navbar .right-bar .profile p {
+    @apply text-textColor;
+  }
+
+  #navbar .right-bar .btn-notification {
+    @apply relative;
+  }
+
+  #navbar .right-bar .btn-notification i {
+    @apply text-textColor;
+  }
+
+  #navbar .right-bar .btn-notification .notification-count {
+    @apply w-5 h-5 text-[12px] bg-mainColor flex items-center justify-center font-[var(--font-urbanist-semibold)] -right-2.5 -top-2 rounded-full text-lightMode absolute;
+  }
+
+  .btn {
+    @apply bg-textColor text-lightMode px-7 py-3 w-[150px] rounded-full hover:opacity-90 duration-300 focus:ring focus:ring-textColor/50;
+  }
+
+  .swiper-pagination {
+    @apply absolute bottom-0;
+  }
+  .swiper-pagination .swiper-pagination-bullet.swiper-pagination-bullet-active {
+    @apply bg-mainColor rounded-full w-[30px] h-[10px];
+  }
+  .swiper-pagination .swiper-pagination-bullet {
+    @apply bg-[#C0C0C0] duration-500;
+  }
+
+  .custom-swiper-button-next, .custom-swiper-button-prev {
+    @apply bg-mainColor/10 inline-block p-2 text-center w-10 h-10 rounded-full hover:bg-mainColor duration-300 cursor-pointer;
+  }
+
+  .custom-swiper-button-next:hover i, .custom-swiper-button-prev:hover i {
+    @apply text-white;
+  }
+
+  .custom-swiper-button-prev {
+    @apply absolute -left-5 bottom-[180px] z-10;
+  }
+
+  .custom-swiper-button-next {
+    @apply absolute -right-5 bottom-[180px] z-10;
+  }
+
+  footer {
+    @apply md:ml-[115px] ml-0;
+  }
+
+  .btn-bookmark, .btn-share, .btn-like {
+    @apply duration-300 hover:bg-mainColor/10;
+  }
+  .btn-bookmark:hover i, .btn-share:hover i, .btn-like:hover i {
+    @apply text-mainColor;
+  }
+  .btn-bookmark.active, .btn-share.active, .btn-like.active {
+    @apply bg-mainColor/10;
+  }
+  .btn-bookmark.active i, .btn-share.active i, .btn-like.active i {
+    @apply text-mainColor;
+  }
+}
+
+/* Utility untuk memastikan dark mode text color override */
+@layer utilities {
+  .dark .text-textColor {
+    @apply text-lightMode;
+  }
+}
+
+/* Fonts */
+@font-face {
+  font-family: "Urbanist-Regular";
+  src: url("/fonts/Urbanist/Urbanist-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Urbanist-Medium";
+  src: url("/fonts/Urbanist/Urbanist-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Urbanist-Semibold";
+  src: url("/fonts/Urbanist/Urbanist-Semibold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Urbanist-Bold";
+  src: url("/fonts/Urbanist/Urbanist-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-urbanist: "Urbanist-Regular", sans-serif;
+  --font-urbanist-medium: "Urbanist-Medium", sans-serif;
+  --font-urbanist-semibold: "Urbanist-Semibold", sans-serif;
+  --font-urbanist-bold: "Urbanist-Bold", sans-serif;
+}
+
+@layer base {
+  * {
+    @apply text-textColor;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply font-[var(--font-urbanist-semibold)] bg-lightMode;
+  }
+
+  section {
+    @apply pt-16 mb-16 relative;
+  }
+
+  input {
+    @apply border-none focus:border-none focus:ring-0 focus:outline-none;
+  }
+}
+
+@layer components {
+  .loader {
+    @apply bg-lightMode fixed top-0 left-0 w-screen h-screen flex items-center justify-center z-[999];
+    transition: opacity 0.75s, visibility 0.75s;
+  }
+
+  .loader img {
+    @apply w-[200px];
+    animation: 2s ease-in infinite loading;
+    position: relative;
+  }
+
+  .loader--hidden {
+    @apply opacity-0;
+    visibility: hidden;
+  }
+
+  @keyframes loading {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .input-text {
+    @apply py-[18px] px-6 bg-[#F0F0F0] rounded-sm mb-3.5;
+  }
+
+  .btn-auth {
+    @apply mt-8 bg-mainColor py-4 mb-11 text-lightMode;
+  }
+
+  #sidebar {
+    @apply border-r fixed z-[99] bg-lightMode border-textColor/30 pt-9 px-2 h-screen w-[115px];
+  }
+
+  #sidebar .sidebar-navigation {
+    @apply flex flex-col items-center justify-center h-screen;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon {
+    @apply text-2xl mb-10 py-3.5 px-4;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon.collections,
+  #sidebar .sidebar-navigation .nav-icon.bookmarks {
+    @apply px-5;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon i {
+    @apply duration-300 text-textColor/90;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon:hover i {
+    @apply text-mainColor;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon.active {
+    @apply bg-mainColor/10 rounded-full;
+  }
+
+  #sidebar .sidebar-navigation .nav-icon.active i {
+    @apply text-mainColor;
+  }
+
+  main {
+    @apply mx-auto md:pl-[150px];
+  }
+
+  #navbar {
+    @apply flex justify-between py-7;
+  }
+
+  #navbar .search-box {
+    @apply flex items-center;
+  }
+
+  #navbar .search-box .search-icon {
+    @apply mr-3 text-xl;
+  }
+
+  /* #navbar .search-box .search-icon i {
+    @apply dark:text-lightMode/90;
+  } */
+
+  #navbar .search-box .search-input {
+    @apply sm:w-[300px] w-[250px] py-2 bg-transparent;
+  }
+
+  #navbar .right-bar {
+    @apply flex items-center;
+  }
+
+  #navbar .right-bar .dropdown:hover .dropdown-menu {
+    @apply block;
+  }
+
+  #navbar .right-bar .profile {
+    @apply flex items-center mr-8;
+  }
+
+  #navbar .right-bar .btn-notification .notification-count {
+    @apply w-5 h-5 text-[12px] bg-mainColor flex items-center justify-center font-[var(--font-urbanist-semibold)] -right-2.5 -top-2 rounded-full text-lightMode absolute;
+  }
+
+  .btn {
+    @apply bg-textColor text-lightMode px-7 py-3 w-[150px] rounded-full hover:opacity-90 duration-300 focus:ring focus:ring-textColor/50;
+  }
+
+  .swiper-pagination {
+    @apply absolute bottom-0;
+  }
+
+  .swiper-pagination .swiper-pagination-bullet.swiper-pagination-bullet-active {
+    @apply bg-mainColor rounded-full w-[30px] h-[10px];
+  }
+
+  .swiper-pagination .swiper-pagination-bullet {
+    @apply bg-[#C0C0C0] duration-500;
+  }
+
+  .custom-swiper-button-next,
+  .custom-swiper-button-prev {
+    @apply bg-mainColor/10 inline-block p-2 text-center w-10 h-10 rounded-full hover:bg-mainColor duration-300;
+  }
+
+  .custom-swiper-button-next:hover i,
+  .custom-swiper-button-prev:hover i {
+    @apply text-white;
+  }
+
+  .custom-swiper-button-prev {
+    @apply absolute -left-5 bottom-[180px] z-10;
+  }
+
+  .custom-swiper-button-next {
+    @apply absolute -right-5 bottom-[180px] z-10;
+  }
+
+  footer {
+    @apply md:ml-[115px] ml-0;
+  }
+
+  .btn-bookmark,
+  .btn-share,
+  .btn-like {
+    @apply duration-300 hover:bg-mainColor/10;
+  }
+
+  .btn-bookmark:hover i,
+  .btn-share:hover i,
+  .btn-like:hover i {
+    @apply text-mainColor;
+  }
+
+  .btn-bookmark.active,
+  .btn-share.active,
+  .btn-like.active {
+    @apply bg-mainColor/10;
+  }
+
+  .btn-bookmark.active i,
+  .btn-share.active i,
+  .btn-like.active i {
+    @apply text-mainColor;
+  }
+}
