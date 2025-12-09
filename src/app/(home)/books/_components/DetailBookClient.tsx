@@ -33,6 +33,20 @@ interface Genre {
   name: string;
 }
 
+interface User {
+  id: number;
+  name: string;
+  profile_photo?: string;
+}
+
+interface Review {
+  id: number;
+  rating: number;
+  review: string;
+  created_at: string;
+  user: User;
+}
+
 interface Book {
   id: number;
   title: string;
@@ -53,11 +67,62 @@ export default function DetailPage({ book }: { book: Book }) {
   const [isSaved, setIsSaved] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
   const [authorBooks, setAuthorBooks] = useState<Book[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [userRating, setUserRating] = useState<number>(0);
+  const [userReview, setUserReview] = useState<string>("");
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const languages = JSON.parse(book.languages || "[]") as string[];
   const shareUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/books/${book.slug}`;
 
-  // Cek apakah buku sudah disimpan ketika halaman pertama kali load
+  // Get current user
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const token = Cookies.get("token") || localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await api.get("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCurrentUser(res.data);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  // Fetch reviews
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await api.get(`/api/books/${book.slug}/reviews`);
+        const reviewsData: Review[] = res.data.reviews || [];
+        setReviews(reviewsData);
+
+        // Check if current user already rated
+        if (currentUser) {
+          const myReview = reviewsData.find((r) => r.user.id === currentUser.id);
+          if (myReview) {
+            setUserRating(myReview.rating);
+            setUserReview(myReview.review);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch reviews:", error);
+      }
+    };
+
+    if (currentUser !== undefined) {
+      fetchReviews();
+    }
+  }, [book.slug, currentUser]);
+
+  // Cek apakah buku sudah disimpan
   useEffect(() => {
     const fetchSavedStatus = async () => {
       const token = Cookies.get("token") || localStorage.getItem("token");
@@ -79,6 +144,7 @@ export default function DetailPage({ book }: { book: Book }) {
     fetchSavedStatus();
   }, [book.id]);
 
+  // Fetch author books
   useEffect(() => {
     const fetchAuthorBooks = async () => {
       try {
@@ -105,7 +171,7 @@ export default function DetailPage({ book }: { book: Book }) {
     }
   };
 
-  // Simpan / Hapus buku dari wishlist
+  // Save/Remove from wishlist
   const handleSave = async () => {
     const token = Cookies.get("token") || localStorage.getItem("token");
     if (!token) {
@@ -135,6 +201,45 @@ export default function DetailPage({ book }: { book: Book }) {
       toast.error(axiosError.response?.data?.message || "Failed to save book");
     } finally {
       setLoadingSave(false);
+    }
+  };
+
+  // Submit rating
+  const handleSubmitRating = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const token = Cookies.get("token") || localStorage.getItem("token");
+    if (!token) {
+      toast.error("You must login to rate this book");
+      return;
+    }
+
+    if (userRating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.post(
+        `/api/books/${book.slug}/rate`,
+        {
+          rating: userRating,
+          review: userReview,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("Rating submitted successfully");
+
+      // Refresh reviews
+      const res = await api.get(`/api/books/${book.slug}/reviews`);
+      setReviews(res.data.reviews || []);
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      toast.error(axiosError.response?.data?.message || "Failed to submit rating");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -169,7 +274,9 @@ export default function DetailPage({ book }: { book: Book }) {
               </h1>
 
               {/* Rating & Save */}
-              <div className="flex items-center mt-[5px] mb-5">
+              <div className="flex items-center mt-[5px] mb-5 gap-4">
+
+                {/* Display Average Rating */}
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => {
                     const rating = book.ratings_avg_rating ?? 0;
@@ -181,29 +288,26 @@ export default function DetailPage({ book }: { book: Book }) {
                       />
                     );
                   })}
-                  <span className="ml-1 mt-0.5">
+                  <span className="ml-1 mt-0.5 text-sm">
                     ({(book.ratings_avg_rating ?? 0).toFixed(1)})
                   </span>
                 </div>
 
-                <span className="mx-5 w-[0.5px] h-6 bg-textColor/50" />
+                {/* Divider */}
+                <span className="w-[1px] h-6 bg-textColor/50" />
 
-                {/* Bookmark button */}
+                {/* Bookmark */}
                 <button
                   onClick={handleSave}
                   disabled={loadingSave}
                   className={`p-3 rounded-full bg-textColor/10 hover:bg-textColor/20 transition ${
                     isSaved ? "text-mainColor" : "text-gray-500"
                   }`}
-                  title={isSaved ? "Remove from Saved" : "Save this book"}
-                  aria-label="Bookmark"
                 >
-                  <Bookmark
-                    className="w-[18px] h-[18px]"
-                    fill={isSaved ? "currentColor" : "none"}
-                  />
+                  <Bookmark className="w-[18px] h-[18px]" fill={isSaved ? "currentColor" : "none"} />
                 </button>
               </div>
+
 
               <p className="text-[20px] mb-[50px] ">{book.author.name}</p>
 
@@ -320,15 +424,147 @@ export default function DetailPage({ book }: { book: Book }) {
                     })}
                   </p>
                 </div>
-                {/* <div className="mb-4">
-                  <h4 className="text-[20px]  font-semibold">Total Read</h4>
-                  <p className="/80 font-urbanist">60 times read</p>
-                </div> */}
               </div>
             </div>
           </div>
 
-         {/* Collection */}
+          {/* Rating Form */}
+          {currentUser && (
+            <div className="bg-lightMode rounded-lg relative lg:-top-20 lg:mt-0 mt-[50px] top-0 shadow-lg px-[50px] py-[30px] mb-10">
+          
+              <h4 className="font-semibold text-[20px] mb-5">
+                {reviews.find((r) => r.user.id === currentUser.id)
+                  ? "Update Your Rating"
+                  : "Rate This Book"}
+              </h4>
+
+              <form onSubmit={handleSubmitRating}>
+                <div className="mb-5">
+                  <label className="block mb-2 font-semibold">Your Rating</label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setUserRating(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="focus:outline-none transition-transform hover:scale-110"
+                      >
+                        <Star
+                          className="w-8 h-8 text-mainColor cursor-pointer"
+                          fill={
+                            star <= (hoverRating || userRating)
+                              ? "currentColor"
+                              : "none"
+                          }
+                        />
+                      </button>
+                    ))}
+                    <span className="ml-2 text-sm text-gray-600">
+                      {userRating > 0 && `${userRating} / 5`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mb-5">
+                  <label className="block mb-2 font-semibold">Your Review (Optional)</label>
+                  <textarea
+                    value={userReview}
+                    onChange={(e) => setUserReview(e.target.value)}
+                    placeholder="Share your thoughts about this book..."
+                    rows={4}
+                    className="w-full px-4 py-3 border border-textColor/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-mainColor/50 resize-none"
+                    maxLength={2000}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {userReview.length} / 2000 characters
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || userRating === 0}
+                  className="px-6 py-3 bg-mainColor text-white rounded-lg hover:bg-mainColor/90 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                >
+                  {isSubmitting
+                    ? "Submitting..."
+                    : reviews.find((r) => r.user.id === currentUser.id)
+                    ? "Update Rating"
+                    : "Submit Rating"}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Reviews Section */}
+          <div className="bg-lightMode rounded-lg relative lg:-top-20 lg:mt-0 mt-[50px] top-0 shadow-lg px-[50px] py-[30px]">
+            <h4 className="font-semibold text-[20px] mb-5">
+              Reviews ({reviews.length})
+            </h4>
+
+            {reviews.length === 0 ? (
+              <p className="text-gray-500 text-center py-10">
+                No reviews yet. Be the first to review this book!
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="pb-6 border-b border-textColor/10 last:border-0"
+                  >
+                    <div className="flex items-start gap-4">
+                      <Image
+                        src={
+                          review.user.profile_photo
+                            ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/${review.user.profile_photo}`
+                            : "/images/default-avatar.png"
+                        }
+                        width={50}
+                        height={50}
+                        alt={review.user.name}
+                        className="rounded-full object-cover w-12 h-12"
+                      />
+
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <h5 className="font-semibold">{review.user.name}</h5>
+                            <p className="text-xs text-gray-500">
+                              {new Date(review.created_at).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className="w-4 h-4 text-mainColor"
+                                fill={i < review.rating ? "currentColor" : "none"}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {review.review && (
+                          <p className="text-gray-700 leading-relaxed">
+                            {review.review}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Collection */}
           {authorBooks.length > 0 && (
             <div className="bg-lightMode rounded-lg relative lg:-top-20 lg:mt-0 mt-[50px] top-0 shadow-lg px-[50px] py-[30px]">
               <h4 className="font-semibold text-[20px] mb-[30px] ">

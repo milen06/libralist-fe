@@ -34,6 +34,18 @@ const STATIC_LANGUAGES = [
   { code: "ja", name: "Japanese" },
 ];
 
+// Generate years dari 2000 sampai tahun saat ini
+const generateYears = () => {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let year = currentYear; year >= 1900; year--) {
+    years.push(year);
+  }
+  return years;
+};
+
+const YEARS = generateYears();
+
 export default function CollectionsPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -44,6 +56,7 @@ export default function CollectionsPage() {
   const initialGenres = searchParams.get("genres")?.split(",") ?? [];
   const initialAuthors = searchParams.get("authors")?.split(",") ?? [];
   const initialLanguages = searchParams.get("languages")?.split(",") ?? [];
+  const initialYear = searchParams.get("year") ?? "";
   const initialSort = searchParams.get("sort") ?? "";
   const initialPage = Number(searchParams.get("page") ?? 1);
 
@@ -54,6 +67,7 @@ export default function CollectionsPage() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>(initialGenres);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>(initialAuthors);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(initialLanguages);
+  const [selectedYear, setSelectedYear] = useState<string>(initialYear);
   const [sort, setSort] = useState<string>(initialSort);
   const [currentPage, setCurrentPage] = useState<number>(initialPage);
   const [totalBooks, setTotalBooks] = useState<number>(0);
@@ -67,11 +81,12 @@ export default function CollectionsPage() {
     if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
     if (selectedAuthors.length > 0) params.set("authors", selectedAuthors.join(","));
     if (selectedLanguages.length > 0) params.set("languages", selectedLanguages.join(","));
+    if (selectedYear) params.set("year", selectedYear);
     if (sort) params.set("sort", sort);
     if (currentPage > 1) params.set("page", currentPage.toString());
 
     router.replace(`${pathname}?${params.toString()}`);
-  }, [search, selectedGenres, selectedAuthors, selectedLanguages, sort, currentPage, pathname, router]);
+  }, [search, selectedGenres, selectedAuthors, selectedLanguages, selectedYear, sort, currentPage, pathname, router]);
 
   // Fetch genres
   useEffect(() => {
@@ -95,6 +110,7 @@ export default function CollectionsPage() {
         selectedGenres.forEach((g) => params.append("genres[]", g));
         selectedAuthors.forEach((a) => params.append("authors[]", a));
         selectedLanguages.forEach((l) => params.append("languages[]", l));
+        if (selectedYear) params.append("year", selectedYear);
         if (sort) params.append("sort", sort);
         params.append("page", currentPage.toString());
         params.append("perPage", perPage.toString());
@@ -111,7 +127,7 @@ export default function CollectionsPage() {
     };
 
     fetchBooks();
-  }, [search, selectedGenres, selectedAuthors, selectedLanguages, sort, currentPage]);
+  }, [search, selectedGenres, selectedAuthors, selectedLanguages, selectedYear, sort, currentPage]);
 
   const startIndex = (currentPage - 1) * perPage + 1;
   const endIndex = Math.min(currentPage * perPage, totalBooks);
@@ -137,6 +153,8 @@ export default function CollectionsPage() {
                 setSelectedGenres={setSelectedGenres}
                 selectedLanguages={selectedLanguages}
                 setSelectedLanguages={setSelectedLanguages}
+                selectedYear={selectedYear}
+                setSelectedYear={setSelectedYear}
               />
             </div>
 
@@ -149,7 +167,24 @@ export default function CollectionsPage() {
                 >
                   Book Collections
                 </h2>
-                <SortDropdown value={sort} onChange={setSort} />
+                <div className="flex gap-3 items-center">
+                  {/* Publication Year */}
+                  <div>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-textColor/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-mainColor/50 font-urbanist bg-white"
+                    >
+                      <option value="">All Years</option>
+                      {YEARS.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <SortDropdown value={sort} onChange={setSort} />
+                </div>
               </div>
 
               {/* Info */}
@@ -166,7 +201,8 @@ export default function CollectionsPage() {
                 >
                   {search ||
                   selectedGenres.length > 0 ||
-                  selectedLanguages.length > 0
+                  selectedLanguages.length > 0 ||
+                  selectedYear
                     ? "Your filters"
                     : "All Books"}
                 </span>

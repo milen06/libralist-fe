@@ -26,7 +26,7 @@ export default function SortDropdown({ value, onChange }: Props) {
     sortOptions.find((opt) => opt.value === value)?.label ?? "Latest";
 
   return (
-    <div className="relative w-[170px] h-2/4 mt-5">
+    <div className="relative w-[170px] h-2/4">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}

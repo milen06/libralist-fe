@@ -8,6 +8,7 @@ import StatsCounter from "@/components/StatsCounter";
 import Footer from "@/components/Footer";
 import { Star } from "lucide-react";
 import { api } from "@/lib/axios";
+import MotivationText from "@/components/MotivationText";
 
 export const dynamic = "force-static";
 
@@ -35,15 +36,33 @@ interface Genre {
 }
 
 export default async function HomePage() {
-  const [booksRes, authorsRes, genresRes] = await Promise.all([
-    api.get<{ books: Book[] }>("/api/books"),
-    api.get<{ authors: { data: Author[] } }>("/api/authors"),
-    api.get<{ genres: Genre[] }>("/api/genres"),
-  ]);
+  let booksRes, authorsRes, genresRes, recommendedRes;
+
+  try {
+    [booksRes, authorsRes, genresRes, recommendedRes] = await Promise.all([
+      api.get("/api/books"),
+      api.get("/api/authors"),
+      api.get("/api/genres"),
+      api.get("/api/books/recommended", {
+        params: {
+          limit: 4,
+        }
+      }),
+    ]);
+  } catch (err) {
+    console.error("API ERROR:", err);
+    return (
+      <div className="p-10 text-center">
+        <h1 className="text-2xl font-bold">Failed to load data</h1>
+        <p className="mt-3 text-gray-500">Please check API server.</p>
+      </div>
+    );
+  }
 
   const books = booksRes.data.books;
   const authors = authorsRes.data.authors.data;
   const genres = genresRes.data.genres;
+  const recommendedBooks = recommendedRes.data.recommended_books;
   const popularBooks = books.slice(0, 8);
 
   return (
@@ -86,19 +105,77 @@ export default async function HomePage() {
             </div>
           </header>
 
+          <MotivationText />
+
           {/* Visitor Counter & Stats */}
           <StatsCounter />
 
           {/* Genre Swiper */}
           <GenreSwiper genres={genres} />
 
+          {/* Recommended Books */}
+          <section className="mb-20">
+            <h1 className="font-[georgia] font-bold text-[32px] mb-10">
+              Recommended for You
+            </h1>
+            <div className="grid lg:grid-cols-4 xs:grid-cols-2 grid-cols-1 gap-10">
+              {recommendedBooks.map((book: Book) => (
+                <Link
+                  key={book.id}
+                  className="hover:-translate-y-2 duration-500"
+                  href={`/books/${book.slug}`}
+                >
+                  <Image
+                    width={300}
+                    height={400}
+                    className="w-full rounded"
+                    src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${book.image}`}
+                    alt={book.title}
+                  />
+                  <h5 className="font-urbanistSemibold text-[18px] mt-2.5">
+                    {book.title}
+                  </h5>
+                  <p className="text-textColor/80 mt-1.5 mb-2.5">
+                    {book.author?.name}
+                  </p>
+                  <div className="flex mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={18}
+                        className={`mr-1 ${
+                          i < Math.round(Number(book.ratings_avg_rating))
+                            ? "fill-mainColor text-mainColor"
+                            : "text-mainColor stroke-[1.5]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
+                  {book.genres && book.genres.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {book.genres.map((genre: { id: number; name: string }) => (
+                        <span
+                          key={genre.id}
+                          className="px-2.5 py-1 text-xs rounded-full bg-mainColor/10 text-mainColor font-urbanistSemibold"
+                        >
+                          {genre.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </section>
+
           {/* Popular Books */}
-          <section>
+          <section className="mb-20">
             <h1 className="font-[georgia] font-bold text-[32px] mb-10">
               Popular Now
             </h1>
             <div className="grid lg:grid-cols-4 xs:grid-cols-2 grid-cols-1 gap-10">
-              {popularBooks.map((book) => (
+              {popularBooks.map((book: Book) => (
                 <Link
                   key={book.id}
                   className="hover:-translate-y-2 duration-500"
@@ -162,7 +239,7 @@ export default async function HomePage() {
               New Author Collection
             </h1>
             <div className="grid xl:grid-cols-3 lg:grid-cols-2 grid-cols-1 gap-10">
-              {authors.map((author) => (
+              {authors.map((author: Author) => (
                 <div
                   key={author.id}
                   className="flex 2xs:flex-row flex-col 2xs:items-center items-start duration-300 hover:brightness-90"
